@@ -98,6 +98,6 @@
 
 | File | Description |
 |---|---|
-| `customer_nodes_profiling.sql` | Full profiling queries for customer_nodes table |
-| `customer_transactions_profiling.sql` | Full profiling queries for customer_transactions table |
-| `regions_profiling.sql` | Profiling and referential integrity checks |
+| `Table_1_Customer_Nodes.sql` | Full profiling queries for customer_nodes table |
+| `Table_2_Customer_Transactions.sql` | Full profiling queries for customer_transactions table |
+| `Table_3_Regions.sql` | Profiling and referential integrity checks |
