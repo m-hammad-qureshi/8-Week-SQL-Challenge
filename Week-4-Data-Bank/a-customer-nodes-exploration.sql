@@ -27,3 +27,18 @@ FROM customer_nodes
 GROUP BY region_id
 ORDER BY region_id ASC;
 
+
+-- 4: How many days on average are customers reallocated to a different node?
+-- Logic: Calculating the duration of stay per node using DATEDIFF.
+-- Data Cleansing: Filtered out '9999-12-31' sentinel values discovered during profiling.
+-- Including these would skew the average to several thousand years.
+WITH date_cte AS (
+    SELECT 
+        DATEDIFF(end_date, start_date) AS duration
+    FROM customer_nodes
+    WHERE end_date != '9999-12-31'
+)
+SELECT 
+    ROUND(AVG(duration), 0) AS avg_reallocation_days
+FROM date_cte;
+
