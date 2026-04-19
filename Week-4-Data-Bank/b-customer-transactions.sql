@@ -48,3 +48,24 @@ WHERE deposit_count > 1 AND (purchase_count >= 1 OR withdrawal_count >= 1)
 GROUP BY txn_month
 ORDER BY txn_month;
 
+
+-- 4: What is the closing balance for each customer at the end of the month?
+-- Logic: Calculating monthly net flow (Deposits - Spendings). 
+-- Spendings include both purchases and withdrawals.
+WITH monthly_cash_flow AS (
+    SELECT 
+        customer_id, 
+        DATE_FORMAT(txn_date, '%Y-%m-01') AS txn_month, 
+        COALESCE(SUM(CASE WHEN txn_type = 'deposit' THEN txn_amount END), 0) AS total_deposited,
+        COALESCE(SUM(CASE WHEN txn_type = 'purchase' THEN txn_amount END), 0) + 
+        COALESCE(SUM(CASE WHEN txn_type = 'withdrawal' THEN txn_amount END), 0) AS total_spent
+    FROM customer_transactions
+    GROUP BY customer_id, txn_month
+)
+SELECT 
+    customer_id, 
+    txn_month, 
+    (total_deposited - total_spent) AS net_monthly_balance
+FROM monthly_cash_flow
+ORDER BY customer_id, txn_month;
+
