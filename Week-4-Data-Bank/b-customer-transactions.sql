@@ -69,3 +69,43 @@ SELECT
 FROM monthly_cash_flow
 ORDER BY customer_id, txn_month;
 
+
+-- 5: What is the percentage of customers who increase their closing balance by more than 5%?
+-- Logic: Comparing the balance of a customer's first month vs. their last month.
+-- Note: ROW_NUMBER() identifies the chronological first and last months for each user.
+WITH monthly_balances AS (
+    SELECT 
+        customer_id, 
+        DATE_FORMAT(txn_date, '%Y-%m-01') AS txn_month, 
+        COALESCE(SUM(CASE WHEN txn_type = 'deposit' THEN txn_amount END), 0) -
+        (COALESCE(SUM(CASE WHEN txn_type = 'purchase' THEN txn_amount END), 0) + 
+         COALESCE(SUM(CASE WHEN txn_type = 'withdrawal' THEN txn_amount END), 0)) AS closing_balance
+    FROM customer_transactions
+    GROUP BY customer_id, txn_month
+),
+ranked_balances AS (
+    SELECT 
+        customer_id, 
+        closing_balance, 
+        ROW_NUMBER() OVER(PARTITION BY customer_id ORDER BY txn_month ASC) AS first_month_rank,    -- 
+        ROW_NUMBER() OVER(PARTITION BY customer_id ORDER BY txn_month DESC) AS last_month_rank    
+    FROM monthly_balances
+),
+growth_comparison AS (
+    SELECT 
+        customer_id, 
+        MAX(CASE WHEN first_month_rank = 1 THEN closing_balance END) AS initial_balance, -- Using Max here to avoid the Null values and 
+        MAX(CASE WHEN last_month_rank = 1 THEN closing_balance END) AS final_balance     -- grouping it by customer_id.
+    FROM ranked_balances
+    GROUP BY customer_id
+),
+percentage_growth AS (
+    SELECT 
+        customer_id, 
+        ((final_balance - initial_balance) / initial_balance) * 100 AS growth_pct
+    FROM growth_comparison
+    WHERE initial_balance != 0 -- Avoiding division by zero errors
+)
+SELECT 
+    (SUM(CASE WHEN growth_pct > 5 THEN 1 ELSE 0 END) / COUNT(*)) * 100 AS pct_customers_high_growth
+FROM percentage_growth;
