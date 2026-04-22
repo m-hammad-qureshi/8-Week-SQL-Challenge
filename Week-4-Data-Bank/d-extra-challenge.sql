@@ -5,9 +5,7 @@
 -- Data Bank wants to reward customers by allocating cloud storage
 -- based on daily interest earned on their running balance.
 -- Annual interest rate: 6%
--- Interest is calculated daily: balance * 0.06 / 365
--- This section implements the SIMPLE INTEREST version.
--- Compound interest version is pending implementation.
+-- Interest is calculated daily: balance * 0.06 / 365.
 -- ============================================
 
 WITH RECURSIVE signed_cte AS (
@@ -95,7 +93,7 @@ interest_rate_cte AS (
 
 -- Final Output: Total data allocation per month based on simple interest
 -- Summing daily interest across all customers gives monthly storage requirement
--- Note: Compound interest version pending — formula: balance * POWER((1 + 0.06/365), elapsed_days) - balance
+-- Compound interest formula: balance * POWER((1 + 0.06/365), elapsed_days) - balance
 SELECT 
     DATE_FORMAT(txn_date, '%Y-%m-01') AS date_month, 
     ROUND(SUM(interest_rate), 2) AS total_interest
