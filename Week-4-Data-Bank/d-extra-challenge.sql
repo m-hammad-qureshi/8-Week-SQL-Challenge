@@ -86,7 +86,8 @@ interest_rate_cte AS (
     -- = running_balance * 0.06 / 365
     -- Only positive balances earn interest — negative balances excluded
     SELECT *, 
-        (running_balance * 0.06) / 365 AS interest_rate
+        (running_balance * 0.06) / 365 AS interest_rate,
+        DATEDIFF(txn_date, MIN(txn_date) OVER(PARTITION BY customer_id)) AS elapsed_days
     FROM day_add_cte
     WHERE txn_date <= plan_date 
     AND running_balance > 0
@@ -102,13 +103,29 @@ FROM interest_rate_cte
 GROUP BY date_month
 ORDER BY date_month;
 
+-- Final SELECT for compound interest:
+SELECT 
+    DATE_FORMAT(txn_date, '%Y-%m-01') AS date_month, 
+    ROUND(
+        SUM(running_balance * POWER((1 + 0.06/365), elapsed_days) - running_balance), 
+        2
+    ) AS compound_interest
+FROM interest_rate_cte
+GROUP BY date_month
+ORDER BY date_month;
+
 -- ============================================
--- RESULTS (Simple Interest):
--- January 2020:  845.13
--- February 2020: 1487.86
--- March 2020:    1609.25
--- April 2020:    1478.14
+-- RESULTS COMPARISON:
 -- ============================================
--- Insight: Interest grows from January to March as customer balances
--- accumulate over time. April drops slightly as dataset ends on April 28(still 2 days remaining)
--- and some customers may have reduced balances.
+-- Month       | Simple Interest | Compound Interest
+-- January     | 845.13          | 8,353.12
+-- February    | 1,487.86        | 47,340.60
+-- March       | 1,609.25        | 98,734.13
+-- April       | 1,478.14        | 135,346.48
+-- ============================================
+-- Insight: Compound interest grows exponentially over time.
+-- By April, compound interest is ~100x higher than simple interest.
+-- This is because POWER() multiplies daily — small daily rate
+-- becomes significant over 100+ elapsed days.
+-- Simple interest → fixed daily calculation on original balance
+-- Compound interest → interest earns interest, grows faster each day
