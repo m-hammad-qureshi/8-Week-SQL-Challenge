@@ -63,3 +63,27 @@ SELECT
 FROM weekly_sales_final
 GROUP BY platform;
 
+-- 6. What is the percentage of sales for Retail vs Shopify for each month?
+-- Methodology: I provided two versions. The CTE version is easier to read and maintain, 
+-- while the single-query version is more concise for production scripts.
+SELECT 
+    month_number, 
+    ROUND(SUM(CASE WHEN platform = 'Shopify' THEN sales ELSE 0 END) / SUM(sales) * 100, 2) AS shopify_percent,
+    ROUND(SUM(CASE WHEN platform = 'Retail' THEN sales ELSE 0 END) / SUM(sales) * 100, 2) AS retail_percent
+FROM weekly_sales_final
+GROUP BY month_number
+ORDER BY month_number;
+
+-- CTE version
+with cte1 as(
+	select month_number, 
+    sum(case when platform = 'shopify' then sales else 0 end) as shopify_sales, 	-- total sales of just shopify
+    sum(case when platform = 'Retail' then sales else 0 end) as retail_sales, 		-- total sales of just retail
+    sum(sales) as total_sales	-- total sales of all platforms
+	from weekly_sales_final
+    GROUP BY month_number		-- will separate the data by each month_number
+)
+select month_number, 
+round(shopify_sales/ total_sales * 100, 2) as shopify_sale_percent, 
+round(retail_sales/ total_sales * 100, 2) as retail_sale_percent
+from cte1;
