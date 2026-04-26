@@ -87,3 +87,14 @@ select month_number,
 round(shopify_sales/ total_sales * 100, 2) as shopify_sale_percent, 
 round(retail_sales/ total_sales * 100, 2) as retail_sale_percent
 from cte1;
+
+-- 7. What is the percentage of sales by demographic for each year?
+SELECT 
+    calender_year,
+    ROUND(SUM(CASE WHEN demographic = 'Couples' THEN sales ELSE 0 END) / SUM(sales) * 100, 2) AS couples_percent,
+    ROUND(SUM(CASE WHEN demographic = 'Families' THEN sales ELSE 0 END) / SUM(sales) * 100, 2) AS families_percent,
+    ROUND(SUM(CASE WHEN demographic = 'Unknown' THEN sales ELSE 0 END) / SUM(sales) * 100, 2) AS unknown_percent
+FROM weekly_sales_final
+GROUP BY calender_year
+ORDER BY calender_year;
+
