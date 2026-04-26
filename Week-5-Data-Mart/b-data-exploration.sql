@@ -54,3 +54,12 @@ SELECT
 FROM weekly_sales_final
 GROUP BY region, month_number
 ORDER BY region ASC, month_number ASC;
+
+-- 5. What is the total count of transactions for each platform?
+-- Note: As established in Q3, we use SUM() because 'transactions' is an aggregated field.
+SELECT 
+    platform, 
+    SUM(transactions) AS total_transactions
+FROM weekly_sales_final
+GROUP BY platform;
+
